@@ -6,16 +6,21 @@ admin manages users and classes.
 
 ## Run it
 
-You need Docker with the Compose plugin.
+You need Python 3 and a recent Docker Compose plugin with support for the
+`!override` tag (Docker Desktop includes Compose).
 
 ```
-git clone git@github.com:KristenPire/NoteApp.git notesapp
+git clone https://github.com/raynegao/NoteApp.git notesapp
 cd notesapp
-docker compose up
+python3 create_comment_key.py
+python3 create_export_key.py
+docker compose up -d --build
 ```
 
 The first start builds the image, launches PostgreSQL, and loads the seed data
-automatically. When it is ready, open:
+automatically. The comment encryption homework migrates stored comments before
+the web server starts. Keep the local `.env` key file to read them after a restart.
+When it is ready, open:
 
 ```
 http://localhost:8080
@@ -37,6 +42,38 @@ e.g. `bob` / `bobpw`.)
 - Python 3.11 + Flask (server-rendered Jinja2 pages and a small JSON API)
 - PostgreSQL 15
 - Docker Compose (`web` and `db` services)
+- cryptography AES-GCM for stored comments
+
+## Coursework through Class 4
+
+| Task | Files |
+| --- | --- |
+| Class 2: NotesApp exploration and first threat model | [Class 2 report and evidence](class2/README.md) |
+| Class 3: Caesar frequency analysis and ECB/GCM image comparison | [Class 3 scripts and results](class3/README.md) |
+| Project 1: group threat model | [Group diagram and risk workbook](project1/README.md) |
+| Class 3 homework: encrypted comments | [Implementation and checks](comment-encryption.md) |
+| Class 4 homework: HMAC-signed grades export | [Implementation, screenshots and checks](hmac-export.md) |
+
+The Class 2 report describes the original app at `1c83e42`. The separate
+`project1/` folder keeps the group's later 16-flow model. The app code includes
+the Class 3 comment encryption and Class 4 export HMAC homework.
+
+## Comment encryption homework
+
+See [the short homework explanation](comment-encryption.md) for the storage format,
+key setup, migration and completed checks. Run the tests with:
+
+```sh
+docker compose exec -T web python -m unittest discover -s tests -v
+```
+
+## Grades export HMAC homework
+
+Exports now include a final `# HMAC: ...` line using HMAC-SHA256. On the teacher
+page, choose **Verify an exported CSV** to check a file. The original passes;
+changing a grade while keeping the original tag fails. The separate secret key
+is generated once by `python3 create_export_key.py` and kept in the Git-ignored
+`.env`. See [the homework explanation and completed checks](hmac-export.md).
 
 ## Reset
 

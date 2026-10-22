@@ -15,6 +15,8 @@ import subprocess
 
 import psycopg2
 import psycopg2.extras
+from comment_crypto import encrypt_comment, decrypt_comment
+from export_hmac import add_export_hmac, verify_export_hmac
 from flask import (
     Flask, request, session, redirect, url_for,
     render_template, Response, jsonify, abort,
@@ -195,6 +197,8 @@ def dashboard():
     )
     notes = cur.fetchall()
     conn.close()
+    for note in notes:
+        note["comment"] = decrypt_comment(note["comment"])
     return render_template("dashboard.html", notes=notes, token=session.get("token"))
 
 
@@ -218,6 +222,7 @@ def api_notes(note_id):
     conn.close()
     if not note:
         return jsonify({"error": "not found"}), 404
+    note["comment"] = decrypt_comment(note["comment"])
     note["grade"] = float(note["grade"]) if note["grade"] is not None else None
     return jsonify(note)
 
@@ -241,6 +246,8 @@ def teacher():
     cur.execute("SELECT id, username FROM users WHERE role = 'student' ORDER BY username")
     students = cur.fetchall()
     conn.close()
+    for note in notes:
+        note["comment"] = decrypt_comment(note["comment"])
     return render_template("teacher.html", classes=classes, notes=notes, students=students)
 
 
@@ -253,7 +260,7 @@ def grades():
     student_id = request.form.get("student_id")
     class_id = request.form.get("class_id")
     grade = request.form.get("grade")
-    comment = request.form.get("comment", "")
+    comment = encrypt_comment(request.form.get("comment", ""))
     conn = get_db()
     cur = conn.cursor()
     if note_id:
@@ -299,11 +306,32 @@ def export_csv():
     writer = csv.writer(buf)
     writer.writerow(["student", "class", "grade", "comment"])
     for r in rows:
-        writer.writerow([r["student"], r["class"], r["grade"], r["comment"]])
+        writer.writerow([r["student"], r["class"], r["grade"], decrypt_comment(r["comment"])])
     return Response(
-        buf.getvalue(), mimetype="text/csv",
+        add_export_hmac(buf.getvalue().encode("utf-8")), mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=grades.csv"},
     )
+
+
+@app.route("/verify-export", methods=["GET", "POST"])
+def verify_export_csv():
+    if not login_required("teacher"):
+        return redirect(url_for("login"))
+    result = None
+    status = 200
+    if request.method == "POST":
+        uploaded = request.files.get("file")
+        if uploaded is None or not uploaded.filename:
+            result, status = "Choose a CSV file first.", 400
+        else:
+            data = uploaded.read(1024 * 1024 + 1)
+            if len(data) > 1024 * 1024:
+                result, status = "File too large (maximum 1 MiB).", 413
+            elif verify_export_hmac(data):
+                result = "CHECK PASSED: the export HMAC is valid."
+            else:
+                result, status = "CHECK FAILED: the export was changed or has no valid HMAC.", 400
+    return render_template("verify_export.html", result=result, failed=status != 200), status
 
 
 @app.route("/admin")

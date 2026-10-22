@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Verify a grades export</h1>
+  <p>Upload an exported CSV to check whether its contents have changed.</p>
+  <form method="post" enctype="multipart/form-data">
+    <label>CSV file (maximum 1 MiB)
+      <input type="file" name="file" accept=".csv" required>
+    </label>
+    <button type="submit">Verify HMAC</button>
+  </form>
+  {% if result %}
+  <p role="status"{% if failed %} class="error"{% endif %}><strong>{{ result }}</strong></p>
+  {% endif %}
+  <p><a href="{{ url_for('teacher') }}">Back to teacher page</a></p>
+</div>
+{% endblock %}

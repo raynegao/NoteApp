@@ -25,6 +25,8 @@ services:
       POSTGRES_PASSWORD: notesapp_pg_pw_2024
       JWT_SECRET: s3cr3t
       SECRET_KEY: dev-session-key
+      COMMENT_KEY: ${COMMENT_KEY:?Run python3 create_comment_key.py first}
+      EXPORT_HMAC_KEY: ${EXPORT_HMAC_KEY:?Run python3 create_export_key.py first}
     ports:
       - "8080:5000"
     depends_on:

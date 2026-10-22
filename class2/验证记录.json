@@ -1,0 +1,180 @@
+{
+  "checked_at": "2026-10-09T13:55:59+02:00",
+  "application": "local course NotesApp at commit 1c83e42",
+  "method": "normal logins, GET pages, own note API, CSV, ping container loopback, logout; forms inspected without submitting writes",
+  "checks": [
+    {
+      "role": "anonymous",
+      "request": "/login",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "anonymous",
+      "request": "/healthz",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "POST /login",
+      "landing": "/dashboard",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "/",
+      "status": 200,
+      "final_path": "/dashboard",
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "/dashboard",
+      "status": 200,
+      "final_path": "/dashboard",
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "/teacher",
+      "status": 200,
+      "final_path": "/login",
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "/admin",
+      "status": 200,
+      "final_path": "/login",
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "GET /api/notes/2",
+      "status": 200,
+      "student": "alice",
+      "passed": true
+    },
+    {
+      "role": "student",
+      "request": "GET /logout then protected page",
+      "final_path": "/login",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "POST /login",
+      "landing": "/teacher",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/",
+      "status": 200,
+      "final_path": "/teacher",
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/dashboard",
+      "status": 200,
+      "final_path": "/dashboard",
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/teacher",
+      "status": 200,
+      "final_path": "/teacher",
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/admin",
+      "status": 200,
+      "final_path": "/login",
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/export.csv?class_id=1",
+      "status": 200,
+      "data_rows": 16,
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "/export.csv",
+      "status": 200,
+      "data_rows": 60,
+      "passed": true
+    },
+    {
+      "role": "teacher",
+      "request": "GET /logout then protected page",
+      "final_path": "/login",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "POST /login",
+      "landing": "/admin",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "/",
+      "status": 200,
+      "final_path": "/admin",
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "/dashboard",
+      "status": 200,
+      "final_path": "/dashboard",
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "/teacher",
+      "status": 200,
+      "final_path": "/login",
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "/admin",
+      "status": 200,
+      "final_path": "/admin",
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "POST /admin/ping",
+      "host": "127.0.0.1 (web container loopback)",
+      "status": 200,
+      "passed": true
+    },
+    {
+      "role": "admin",
+      "request": "GET /logout then protected page",
+      "final_path": "/login",
+      "status": 200,
+      "passed": true
+    }
+  ],
+  "all_passed": true,
+  "database_counts": {
+    "users": 35,
+    "classes": 4,
+    "notes": 60
+  },
+  "mutating_forms": "Grade create/update and user create/delete observed in HTML and source only; not submitted."
+}

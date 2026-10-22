@@ -12,3 +12,4 @@ venv/
 # Local env overrides
 .env
 .env.local
+/local/
