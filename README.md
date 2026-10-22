@@ -48,7 +48,7 @@ e.g. `bob` / `bobpw`.)
 - Docker Compose (`web` and `db` services)
 - cryptography AES-GCM for stored comments
 
-## Coursework through Class 4
+## Coursework
 
 | Task | Files |
 | --- | --- |
@@ -57,6 +57,7 @@ e.g. `bob` / `bobpw`.)
 | Project 1: group threat model | [Group diagram and risk workbook](project1/README.md) |
 | Class 3 homework: encrypted comments | [Implementation and checks](comment-encryption.md) |
 | Class 4 homework: HMAC-signed grades export | [Implementation, screenshots and checks](hmac-export.md) |
+| Class 5: HTTPS traffic audit | [Audit report and real screenshots](class5/README.md) |
 
 The Class 2 report describes the original app at `1c83e42`. The separate
 `project1/` folder keeps the group's later 16-flow model. The app code includes
@@ -78,6 +79,57 @@ page, choose **Verify an exported CSV** to check a file. The original passes;
 changing a grade while keeping the original tag fails. The separate secret key
 is generated once by `python3 create_export_key.py` and kept in the Git-ignored
 `.env`. See [the homework explanation and completed checks](hmac-export.md).
+
+## Class 5 HTTPS lab
+
+The [audit report](class5/README.md) includes the HTTP/HTTPS screenshots and
+certificate comparison. The saved captures used cookie-free curl requests;
+Chrome logins were additionally checked.
+
+The HTTPS overlay adds Nginx and removes Flask's published host port. First
+generate a local self-signed certificate if it does not already exist:
+
+```sh
+mkdir -p nginx/certs
+if [ ! -e nginx/certs/notesapp.key ] && [ ! -e nginx/certs/notesapp.crt ]; then
+  (umask 077; openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+    -keyout nginx/certs/notesapp.key -out nginx/certs/notesapp.crt \
+    -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1')
+elif [ ! -s nginx/certs/notesapp.key ] || [ ! -s nginx/certs/notesapp.crt ]; then
+  printf '%s\n' 'Incomplete certificate pair: restore the matching key and certificate before starting.' >&2
+  false
+fi
+```
+
+Keep all three Compose files so PostgreSQL stays on loopback port 5433:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.https.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.https.yml exec -T nginx nginx -t
+```
+
+Open `https://localhost:8443`. The old `http://localhost:8080` entry redirects to
+HTTPS. Both ports bind only to `127.0.0.1`. Inside Docker, Nginx listens on 80/443
+and forwards to `web:5000`.
+
+The self-signed certificate and private key are in the Git-ignored `nginx/certs/`.
+Keep the private key local; do not add the certificate to system trust. For a
+command-line check with certificate verification, use the exact local certificate:
+
+```sh
+curl --noproxy '*' --cacert nginx/certs/notesapp.crt https://localhost:8443/healthz
+```
+
+The report and evidence are in [class5/](class5/README.md). The existing 14 tests
+and HTTPS export/HMAC checks passed; the database contents were unchanged.
+
+To return to the plain-HTTP stack for another class exercise, stop the HTTPS
+stack without deleting volumes, then start the usual stack:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.https.yml down
+docker compose up -d
+```
 
 ## Reset
 

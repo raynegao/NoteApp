@@ -13,3 +13,6 @@ venv/
 .env
 .env.local
 /local/
+
+# Local TLS certificate and private key for the Class 5 lab.
+/nginx/certs/
