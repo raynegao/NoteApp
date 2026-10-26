@@ -1,0 +1,39 @@
+Lab 2 measured output - 26 October 2026
+
+Dictionary attack (local Mac Python, 6 synthetic teacher accounts)
+$ python3 crack/make_dump.py
+Wrote 6 synthetic accounts to crack/leaked_users.txt
+$ python3 crack/crack.py
+Wordlist: 170 entries
+Cracked 4/6 accounts in 0.108 ms
+liwei: 123456
+aisha: password1
+tomk: qwerty123
+sofia: iloveyou
+Not cracked: marie, raj
+
+Wordlist source:
+https://kristenpire.github.io/epita-security-labs/class5/assets/common-passwords.txt
+SHA-256: 3614d52dbb45e8b0080821bdf1a0c0ad2cbac2cc85551239f4f2bc2a9ebc5e3f
+
+Hash-speed measurement (running local Docker web container, Python 3.11, aarch64)
+$ docker compose exec -T web python /host/class5/password-audit/benchmark.py
+MD5 hashes measured: 100000
+Argon2: 39.192 ms for one hash
+MD5: 3549466.245 guesses/sec; 306673883590.381 guesses/day
+Argon2: 25.515 guesses/sec; 2204517.468 guesses/day
+Argon2 is 139111.569 times slower per guess
+Argon2 parameters: m=65536 KiB, t=3, p=4
+One local CPU run; the daily figures are estimates, not a 24-hour test.
+
+Application verification
+21 unit tests passed.
+Independent PostgreSQL checks passed: wrong/correct legacy login, login upgrade,
+repeat login, wrong Argon2 password, missing user, student dashboard, teacher/admin
+login, 60-row CSV export and HMAC original/tampered verification.
+Real HTTPS login: Alice upgraded, repeated login passed, wrong password rejected.
+After web restart: HTTPS login passed; the stored Alice hash did not change.
+Nginx syntax check passed.
+Only Alice's password field changed in the course database.
+Users: 35; classes: 4; enrollments: 60; notes: 60.
+The remaining database fields and the .env key file were unchanged.

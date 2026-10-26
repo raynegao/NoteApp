@@ -1,0 +1,21 @@
+{
+  "wrong_legacy_password_rejected_without_change": true,
+  "alice_first_https_login_upgraded_to_argon2id": true,
+  "alice_second_https_login_passed_without_rehash": true,
+  "wrong_argon2_password_rejected_without_session_or_change": true,
+  "unknown_username_rejected": true,
+  "only_alice_password_changed": true,
+  "users_other_fields_unchanged": true,
+  "classes_enrollments_notes_all_fields_unchanged": true,
+  "env_and_encryption_hmac_keys_unchanged": true,
+  "row_counts": {
+    "users": 35,
+    "classes": 4,
+    "enrollments": 60,
+    "notes": 60
+  },
+  "alice_hash_format": "$argon2id$v=19$m=65536,t=3,p=4$...",
+  "restart_login_and_same_stored_hash": true,
+  "unit_tests_passed": 21,
+  "independent_database_checks_passed": true
+}

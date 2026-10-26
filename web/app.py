@@ -15,6 +15,8 @@ import subprocess
 
 import psycopg2
 import psycopg2.extras
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, InvalidHashError
 from comment_crypto import encrypt_comment, decrypt_comment
 from export_hmac import add_export_hmac, verify_export_hmac
 from flask import (
@@ -33,6 +35,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-session-key")
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+ph = PasswordHasher()
+
+
+def is_argon2_hash(value):
+    return value.startswith("$argon2")
 
 LOG_FILE = os.environ.get("NOTESAPP_LOG", "/var/log/notesapp/app.log")
 
@@ -148,8 +155,8 @@ def login():
         password = request.form.get("password", "")
         # Flaw #8: SQL injection. Query built by string concatenation, no params.
         query = (
-            "SELECT id, username, role FROM users "
-            "WHERE username = '" + username + "' AND password = '" + password + "'"
+            "SELECT id, username, role, password FROM users "
+            "WHERE username = '" + username + "'"
         )
         conn = get_db()
         cur = conn.cursor()
@@ -160,8 +167,25 @@ def login():
             # Keep the raw error visible - helps the SQLi session.
             error = f"Query error: {e}"
             row = None
-        conn.close()
+        authenticated = False
         if row:
+            stored = row["password"]
+            if is_argon2_hash(stored):
+                try:
+                    ph.verify(stored, password)
+                    authenticated = True
+                except (VerificationError, InvalidHashError):
+                    authenticated = False
+            elif stored == password:
+                new_hash = ph.hash(password)
+                cur.execute(
+                    "UPDATE users SET password = %s WHERE id = %s",
+                    (new_hash, row["id"]),
+                )
+                authenticated = True
+                log(f"upgraded {row['username']} to argon2")
+        conn.close()
+        if authenticated:
             session["user_id"] = row["id"]
             session["username"] = row["username"]
             session["role"] = row["role"]

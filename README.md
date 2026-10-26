@@ -47,6 +47,7 @@ e.g. `bob` / `bobpw`.)
 - PostgreSQL 15
 - Docker Compose (`web` and `db` services)
 - cryptography AES-GCM for stored comments
+- argon2-cffi for password upgrades on login
 
 ## Coursework
 
@@ -58,10 +59,26 @@ e.g. `bob` / `bobpw`.)
 | Class 3 homework: encrypted comments | [Implementation and checks](comment-encryption.md) |
 | Class 4 homework: HMAC-signed grades export | [Implementation, screenshots and checks](hmac-export.md) |
 | Class 5: HTTPS traffic audit | [Audit report and real screenshots](class5/README.md) |
+| Class 5 Lab 2: password storage audit | [MD5 results, Argon2 measurement and login upgrade](class5/password-audit/README.md) |
 
 The Class 2 report describes the original app at `1c83e42`. The separate
 `project1/` folder keeps the group's later 16-flow model. The app code includes
-the Class 3 comment encryption and Class 4 export HMAC homework.
+the Class 3 comment encryption, Class 4 export HMAC and Class 5 password homework.
+
+## Class 5 password lab
+
+The [short audit](class5/password-audit/README.md) records the synthetic MD5
+dictionary attack, the measured MD5/Argon2 speeds and the login checks. Existing
+plaintext passwords upgrade to Argon2id on the next correct login. Already
+upgraded accounts use Argon2 verification. Rebuild the web image after pulling
+these changes; in HTTPS mode keep all three Compose files:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.https.yml up -d --build
+```
+
+The current suite has 21 tests. The original seed data and the later-class
+username SQL exercise are unchanged.
 
 ## Comment encryption homework
 
