@@ -60,6 +60,7 @@ e.g. `bob` / `bobpw`.)
 | Class 4 homework: HMAC-signed grades export | [Implementation, screenshots and checks](hmac-export.md) |
 | Class 5: HTTPS traffic audit | [Audit report and real screenshots](class5/README.md) |
 | Class 5 Lab 2: password storage audit | [MD5 results, Argon2 measurement and login upgrade](class5/password-audit/README.md) |
+| Class 6: forge a JWT token | [Finding, measured results and brute-force timing](class6/README.md) |
 
 The Class 2 report describes the original app at `1c83e42`. The separate
 `project1/` folder keeps the group's later 16-flow model. The app code includes
