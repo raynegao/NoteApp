@@ -18,6 +18,7 @@ git clone https://github.com/raynegao/NoteApp.git notesapp
 cd notesapp
 python3 create_comment_key.py
 python3 create_export_key.py
+python3 create_jwt_key.py
 docker compose up -d --build
 ```
 
@@ -61,10 +62,22 @@ e.g. `bob` / `bobpw`.)
 | Class 5: HTTPS traffic audit | [Audit report and real screenshots](class5/README.md) |
 | Class 5 Lab 2: password storage audit | [MD5 results, Argon2 measurement and login upgrade](class5/password-audit/README.md) |
 | Class 6: forge a JWT token | [Finding, measured results and brute-force timing](class6/README.md) |
+| Class 7: fix the login | [JWT fixes and audit results](class7/README.md) |
 
 The Class 2 report describes the original app at `1c83e42`. The separate
 `project1/` folder keeps the group's later 16-flow model. The app code includes
-the Class 3 comment encryption, Class 4 export HMAC and Class 5 password homework.
+the Class 3 comment encryption, Class 4 export HMAC, Class 5 password homework
+and Class 7 JWT verification fixes.
+
+## Class 7 login fix
+
+Run `python3 create_jwt_key.py` once before starting the app. It creates a random
+JWT signing key in the Git-ignored `.env`, or keeps the existing key. Compose
+passes it to the web container; the app has no weak default. Keep this key
+separate from the comment encryption, export HMAC and Flask session keys.
+After changing code or the JWT key, rebuild using the three-file HTTPS command
+below. In production, supply secrets through a secrets store rather than a
+committed file. See [the audit](class7/README.md) for the required checks.
 
 ## Class 5 password lab
 
@@ -78,7 +91,7 @@ these changes; in HTTPS mode keep all three Compose files:
 docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.https.yml up -d --build
 ```
 
-The current suite has 21 tests. The original seed data and the later-class
+The current suite has 35 tests. The original seed data and the later-class
 username SQL exercise are unchanged.
 
 ## Comment encryption homework
