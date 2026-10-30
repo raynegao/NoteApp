@@ -4,6 +4,8 @@
 
 **Student ID:** 2023903116
 
+**Class 7 partner:** Ye Yuchen (2023901708)
+
 A small grades application used throughout the Computer Security course. Teachers
 record grades and comments for their classes, students read their own grades, and an
 admin manages users and classes.
