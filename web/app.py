@@ -11,6 +11,7 @@ import hmac
 import time
 import base64
 import hashlib
+import re
 import subprocess
 
 import psycopg2
@@ -145,15 +146,12 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "")
         password = request.form.get("password", "")
-        # Flaw #8: SQL injection. Query built by string concatenation, no params.
-        query = (
-            "SELECT id, username, role, password FROM users "
-            "WHERE username = '" + username + "'"
-        )
+        # Flaw #8 fix: parameterised query - input is data, never grammar.
+        query = "SELECT id, username, role, password FROM users WHERE username = %s"
         conn = get_db()
         cur = conn.cursor()
         try:
-            cur.execute(query)
+            cur.execute(query, (username,))
             row = cur.fetchone()
         except Exception as e:
             # Keep the raw error visible - helps the SQLi session.
@@ -370,19 +368,22 @@ def admin():
 
 @app.route("/admin/ping", methods=["POST"])
 def admin_ping():
-    # Flaw #11: no CSRF token. Flaw #9: command injection via os/system shell.
+    # Flaw #11: no CSRF token (not part of this lab).
     if not login_required("admin"):
         return redirect(url_for("login"))
     host = request.form.get("host", "")
-    # Host is concatenated straight into a shell command.
-    cmd = "ping -c 1 " + host
-    try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=10,
-        )
-        output = result.stdout + result.stderr
-    except Exception as e:
-        output = str(e)
+    # Flaw #9 fix: no shell. host is one single argument, never re-read as syntax.
+    if not re.fullmatch(r"[A-Za-z0-9.-]+", host):
+        output = "Invalid host: only letters, digits, dots and dashes are allowed."
+    else:
+        try:
+            result = subprocess.run(
+                ["ping", "-c", "1", host],
+                capture_output=True, text=True, timeout=10,
+            )
+            output = result.stdout + result.stderr
+        except Exception as e:
+            output = str(e)
     log(f"admin ping host={host!r}")
     return render_template("admin.html", users=_all_users(), classes=_all_classes(),
                            ping_result=output)
