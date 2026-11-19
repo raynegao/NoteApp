@@ -49,6 +49,7 @@ class ExportRoutesTests(unittest.TestCase):
         with self.client.session_transaction() as session:
             session["user_id"] = 1
             session["role"] = "teacher"
+            session["csrf"] = "test-token"
 
     def test_export_keeps_csv_fields_and_decrypts_comments(self):
         conn = MagicMock()
@@ -72,14 +73,19 @@ class ExportRoutesTests(unittest.TestCase):
         ):
             with self.subTest(status=status, message=message):
                 response = self.client.post(
-                    "/verify-export", data={"file": (io.BytesIO(data), "grades.csv")},
+                    "/verify-export", data={
+                        "csrf_token": "test-token",
+                        "file": (io.BytesIO(data), "grades.csv"),
+                    },
                 )
                 self.assertEqual(response.status_code, status)
                 self.assertIn(message, response.data)
 
     def test_missing_and_oversized_uploads(self):
-        self.assertEqual(self.client.post("/verify-export").status_code, 400)
+        self.assertEqual(self.client.post(
+            "/verify-export", data={"csrf_token": "test-token"}).status_code, 400)
         response = self.client.post("/verify-export", data={
+            "csrf_token": "test-token",
             "file": (io.BytesIO(b"x" * (1024 * 1024 + 1)), "too-big.csv"),
         })
         self.assertEqual(response.status_code, 413)
@@ -92,9 +98,17 @@ class ExportRoutesTests(unittest.TestCase):
                     if role:
                         session["user_id"] = 1
                         session["role"] = role
+                        session["csrf"] = "test-token"
                 for path in ("/export.csv", "/verify-export"):
                     self.assertEqual(self.client.get(path).status_code, 302)
-                self.assertEqual(self.client.post("/verify-export").status_code, 302)
+                if role:
+                    # With a valid CSRF token, access control still refuses the POST.
+                    self.assertEqual(self.client.post(
+                        "/verify-export",
+                        data={"csrf_token": "test-token"}).status_code, 302)
+                else:
+                    # No session means no CSRF token either: CSRF check refuses first.
+                    self.assertEqual(self.client.post("/verify-export").status_code, 400)
 
 
 if __name__ == "__main__":
